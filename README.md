@@ -83,7 +83,7 @@ Run the terminal chat CLI:
 vepclin
 ```
 ## Running only MCP server
-
+Most users don't need this. The `vepclin` chat CLI starts and uses the MCP tools automatically.
 ```bash
 vepclin-server
 ```
