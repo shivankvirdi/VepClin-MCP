@@ -82,7 +82,7 @@ Run the terminal chat CLI:
 ```bash
 vepclin
 ```
-## Optional: Running only MCP server
+## Running only MCP server
 
 ```bash
 vepclin-server
