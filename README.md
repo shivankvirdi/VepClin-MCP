@@ -1,5 +1,9 @@
 VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ensembl VEP, NCBI ClinVar, an MCP server layer, and OpenRouter's NVIDIA Nemotron 3 Ultra model to look up variant consequences and clinical significance, presenting the results as clear, readable summaries in a Rich-powered CLI.
 
+
+https://github.com/user-attachments/assets/1f1c3a2e-a605-4a85-a8f4-58bf5e1e59e2
+
+
 The CLI uses a Gruvbox-styled Rich interface with persistent conversation history. Ask follow-up questions in the same session, use `/clear` to reset context, `/help` for input tips, and `/exit` to quit.
 
 ## Quick Install
