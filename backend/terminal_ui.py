@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any
 
 from rich.console import Console, Group
@@ -45,8 +46,44 @@ theme = Theme(
 
 console = Console(theme=theme, highlight=False)
 
+EMOJI_RE = re.compile(
+    "["
+    "\U0001f1e6-\U0001f1ff"
+    "\U0001f300-\U0001f5ff"
+    "\U0001f600-\U0001f64f"
+    "\U0001f680-\U0001f6ff"
+    "\U0001f700-\U0001f77f"
+    "\U0001f780-\U0001f7ff"
+    "\U0001f800-\U0001f8ff"
+    "\U0001f900-\U0001f9ff"
+    "\U0001fa00-\U0001fa6f"
+    "\U0001fa70-\U0001faff"
+    "\u2600-\u26ff"
+    "\u2700-\u27bf"
+    "]+",
+    flags=re.UNICODE,
+)
+
+VARIATION_SELECTOR_RE = re.compile("[\ufe0e\ufe0f]")
+
+
+def strip_emojis(value: str) -> str:
+    without_emoji = EMOJI_RE.sub("", value)
+    return VARIATION_SELECTOR_RE.sub("", without_emoji)
+
+
+def _sanitize_display_data(data: Any) -> Any:
+    if isinstance(data, str):
+        return strip_emojis(data)
+    if isinstance(data, list):
+        return [_sanitize_display_data(item) for item in data]
+    if isinstance(data, dict):
+        return {key: _sanitize_display_data(value) for key, value in data.items()}
+    return data
+
 
 def render_json(data: Any) -> JSON | Pretty:
+    data = _sanitize_display_data(data)
     try:
         return JSON(json.dumps(data, indent=2, default=str))
     except TypeError:
@@ -63,7 +100,7 @@ def _clean_value(value: Any) -> str:
     if isinstance(value, bool):
         return "yes" if value else "no"
     if isinstance(value, str):
-        return value
+        return strip_emojis(value)
     return str(value)
 
 
@@ -187,9 +224,10 @@ def print_help() -> None:
 
 
 def print_answer(content: str) -> None:
+    content = strip_emojis(content or "_No answer returned._")
     console.print(
         Panel(
-            Markdown(content or "_No answer returned._"),
+            Markdown(content),
             title="VepClin",
             title_align="left",
             border_style=GRUVBOX["green"],
@@ -202,7 +240,7 @@ def print_answer(content: str) -> None:
 def print_error(title: str, detail: Any) -> None:
     console.print(
         Panel(
-            render_json(detail) if isinstance(detail, (dict, list)) else Text(str(detail), style="error"),
+            render_json(detail) if isinstance(detail, (dict, list)) else Text(strip_emojis(str(detail)), style="error"),
             title=title,
             title_align="left",
             border_style=GRUVBOX["red"],
@@ -214,7 +252,7 @@ def print_error(title: str, detail: Any) -> None:
 def print_retry(attempt: int, detail: Any, backoff_seconds: int, title: str = "OpenRouter retry") -> None:
     body = Group(
         Text(f"Attempt {attempt} failed.", style="retry"),
-        render_json(detail) if isinstance(detail, (dict, list)) else Text(str(detail), style="hint"),
+        render_json(detail) if isinstance(detail, (dict, list)) else Text(strip_emojis(str(detail)), style="hint"),
         Text(f"Retrying in {backoff_seconds} seconds...", style="hint"),
     )
     console.print(Panel(body, title=title, border_style=GRUVBOX["orange"], padding=(1, 2)))
@@ -224,7 +262,7 @@ def print_tool_call(name: str, arguments: dict[str, Any]) -> None:
     title, message = _tool_call_text(name, arguments)
     console.print(
         Panel(
-            Text(message, style="answer"),
+            Text(strip_emojis(message), style="answer"),
             title=title,
             title_align="left",
             border_style=GRUVBOX["blue"],
@@ -263,7 +301,7 @@ def print_server_event(title: str, data: Any | None = None) -> None:
     if isinstance(data, dict):
         body = _details_table([(_clean_label(key), value) for key, value in data.items()])
     elif data is not None:
-        body = Text(_clean_value(data), style="hint")
+        body = Text(strip_emojis(_clean_value(data)), style="hint")
     else:
         body = Text("ready", style="hint")
 

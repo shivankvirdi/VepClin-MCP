@@ -38,7 +38,8 @@ SYSTEM_MESSAGE = {
         "construct a genomic coordinate if you are highly confident in the exact position. "
         "Prefer asking the user for the exact HGVS notation, such as from a lab report or "
         "ClinVar page, rather than guessing, since an incorrect coordinate can silently "
-        "return data for the wrong variant."
+        "return data for the wrong variant. Do not use emojis, pictograms, or decorative "
+        "symbols in your responses. Use plain text headings and concise Markdown tables."
     ),
 }
 
