@@ -80,4 +80,4 @@ async def run_query(question: str):
                 })
 
 user_query = input("What genomic variant do you have a question about?: ")
-asyncio.run(run_query("What does the variant chr7:g.140753336A>T do, and is it dangerous?"))
+asyncio.run(run_query(user_query))
