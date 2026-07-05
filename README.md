@@ -8,13 +8,13 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
-### Create a .env file in the folder where you will run VepClin
+### Create a `.env` file in the folder where you will run VepClin
 ```powershell
 OPENROUTER_API_KEY=sk-or...
 # Fill with your API key (see .env.example)
 ```
 ## Install from Source
-Follow .env.example & add API key to VepClin-MCP/.env (repo root)
+Follow `.env.example` & add API key to `VepClin-MCP/.env` (repo root)
 ```powershell
 git clone https://github.com/shivankvirdi/VepClin-MCP.git
 cd VepClin-MCP
