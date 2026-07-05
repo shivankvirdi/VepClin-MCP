@@ -1,5 +1,6 @@
 from fastmcp import FastMCP
 from variant_client import VariantClient
+from terminal_ui import print_server_event
 
 mcp = FastMCP("vepclin-mcp")
 client = VariantClient()
@@ -17,7 +18,10 @@ def get_vep_consequence(variant: str) -> dict:
     - protein_change_short: the same change in short form, (e.g. "V600E" — use this exact
     value when calling get_clinvar_summary)
     """
-    return client.get_vep_consequence(variant)
+    print_server_event("get_vep_consequence input", {"variant": variant})
+    result = client.get_vep_consequence(variant)
+    print_server_event("get_vep_consequence output", result)
+    return result
 
 @mcp.tool()
 def get_clinvar_summary(gene_symbol: str, protein_change_short: str) -> dict:
@@ -38,8 +42,20 @@ def get_clinvar_summary(gene_symbol: str, protein_change_short: str) -> dict:
         - "oncogenicity_classification": Tendency to cause tumors/cancer (e.g. 'Oncogenic')
         - "oncogenicity_traits": (e.g. ['Neoplasm'])
     If found is False, function returns {"found": False, "matches": []}
+
+    Each match includes "position_verified": true if the genomic position matches what
+    get_vep_consequence reported, false if it doesn't (indicating possible ambiguity or
+    a different variant), or null if verification wasn't possible. Treat false results
+    with caution and mention the discrepancy to the user.
         """
-    return client.get_clinvar_summary(gene_symbol, protein_change_short)
+    print_server_event(
+        "get_clinvar_summary input",
+        {"gene_symbol": gene_symbol, "protein_change_short": protein_change_short},
+    )
+    result = client.get_clinvar_summary(gene_symbol, protein_change_short)
+    print_server_event("get_clinvar_summary output", result)
+    return result
 
 if __name__ == "__main__":
+    print_server_event("VepClin MCP server", {"transport": "http", "host": "0.0.0.0", "port": 8080})
     mcp.run(transport="http", host="0.0.0.0", port=8080)

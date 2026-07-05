@@ -1,0 +1,26 @@
+[project]
+name = "vepclin-mcp"
+version = "0.1.0"
+dependencies = [
+    "httpx",
+    "biopython",
+    "rich",
+    "fastmcp",
+    "python-dotenv",
+]
+
+[project.scripts]
+vepclin = "llm_runner:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["llm_runner", "mcp_server", "terminal_ui", "variant_client"]
+
+[tool.setuptools.package-dir]
+"" = "backend"

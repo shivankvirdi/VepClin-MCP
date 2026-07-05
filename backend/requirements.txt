@@ -1,4 +1,0 @@
-httpx
-fastmcp
-pytest-asyncio
-biopython

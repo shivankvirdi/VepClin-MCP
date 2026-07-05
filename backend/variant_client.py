@@ -1,7 +1,28 @@
 import httpx
 import time
 from Bio import Entrez
+
+from terminal_ui import print_retry
+
 Entrez.email = "shivank.virdi@gmail.com"
+
+def retry_on_failure(func, *args, max_retries=3, backoff_seconds=5, **kwargs):
+    last_error = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            return func(*args, **kwargs)
+        except httpx.HTTPStatusError as e:
+            if 400 <= e.response.status_code < 500:
+                raise  # client error — don't retry, let it propagate immediately
+            last_error = e
+        except Exception as e:
+            last_error = e
+
+        if attempt < max_retries:
+            print_retry(attempt, str(last_error), backoff_seconds, title="Upstream service retry")
+            time.sleep(backoff_seconds)
+
+    raise RuntimeError(f"Failed after {max_retries} attempts") from last_error
 
 class VariantClient:
     AA_CODES = {
@@ -14,18 +35,37 @@ class VariantClient:
     def __init__(self, timeout=20.0):
         self.timeout = timeout
 
-    def get_vep_consequence(self, variant: str) -> dict:
-        url = f"https://rest.ensembl.org/vep/human/hgvs/{variant}"
+    def _to_short_form(self, protein_change: str) -> str:
+        short = protein_change.replace("p.", "")
+        three_to_one = {v: k for k, v in self.AA_CODES.items()}
+        for three, one in three_to_one.items():
+            short = short.replace(three, one)
+        return short
 
+    def _fetch_vep(self, url):
         response = httpx.get(
             url,
-            params={"content-type": "application/json", "pick": 1},
+            params={"content-type": "application/json", "pick": 1, "hgvs": 1},
             headers={"Accept": "application/json"},
             timeout=self.timeout
         )
-
         response.raise_for_status()
-        data = response.json()
+        return response.json()
+
+    def get_vep_consequence(self, variant: str) -> dict:
+        url = f"https://rest.ensembl.org/vep/human/hgvs/{variant}"
+
+        try:
+            data = retry_on_failure(self._fetch_vep, url)
+        except httpx.HTTPStatusError as e:
+            if 400 <= e.response.status_code < 500:
+                return {
+                    "error": "invalid_variant",
+                    "message": f"Ensembl rejected this variant string as invalid or malformed: '{variant}'. "
+                            f"Check that it follows correct HGVS genomic notation, e.g. 'chr7:g.140753336A>T'.",
+                }
+            raise  # server-side failure
+
         result = data[0]
 
         transcripts = result.get("transcript_consequences", [])
@@ -33,23 +73,22 @@ class VariantClient:
 
         gene_symbol = t.get("gene_symbol")
         consequence = result.get("most_severe_consequence")
-        amino_acids = t.get("amino_acids")
-        protein_start = t.get("protein_start")
 
         protein_change = None
         protein_change_short = None
 
-        if consequence != "synonymous_variant" and amino_acids and "/" in amino_acids:
-            ref_aa, alt_aa = amino_acids.split("/")
-            protein_change_short = f"{ref_aa}{protein_start}{alt_aa}"  # "V600E"
-            if ref_aa in self.AA_CODES and alt_aa in self.AA_CODES:
-                protein_change = f"p.{self.AA_CODES[ref_aa]}{protein_start}{self.AA_CODES[alt_aa]}"
+        hgvsp = t.get("hgvsp")
+        if consequence != "synonymous_variant" and hgvsp and ":" in hgvsp:
+            protein_change = hgvsp.split(":")[1]
+            protein_change_short = self._to_short_form(protein_change)
 
         return {
             "gene_symbol": gene_symbol,
             "consequence": consequence,
             "protein_change": protein_change,
-            "protein_change_short" : protein_change_short,
+            "protein_change_short": protein_change_short,
+            "genomic_start": result.get("start"),
+            "genomic_end": result.get("end"),
         }
     
     def extract_trait_names(self, classification: dict) -> list:
@@ -59,21 +98,38 @@ class VariantClient:
                 names.append(trait.get("trait_name"))
             return names
 
-    def get_clinvar_summary(self, gene_symbol: str, protein_change_short: str) -> dict:
-        term = f"{gene_symbol}[gene] AND {protein_change_short}[Variant Name]"
+    def _fetch_clinvar_search(self, term):
         search_handle = Entrez.esearch(db="clinvar", term=term)
-        search_record = Entrez.read(search_handle)
+        return Entrez.read(search_handle)
+
+    def _fetch_clinvar_summary(self, id_list):
+        summary_handle = Entrez.esummary(db="clinvar", id=",".join(id_list))
+        return Entrez.read(summary_handle, validate=False)
+
+    def get_clinvar_summary(self, gene_symbol: str, protein_change_short: str, expected_start: int = None, expected_end: int = None) -> dict:
+        term = f"{gene_symbol}[gene] AND {protein_change_short}[Variant Name]"
+        search_record = retry_on_failure(self._fetch_clinvar_search, term)
 
         id_list = search_record.get("IdList", [])
         if not id_list:
             return {"found": False, "matches": []}
-        
-        summary_handle = Entrez.esummary(db="clinvar", id=",".join(id_list))
-        summary = Entrez.read(summary_handle, validate=False)
+
+        summary = retry_on_failure(self._fetch_clinvar_summary, id_list)
         records = summary["DocumentSummarySet"]["DocumentSummary"]
 
-        matches=[]
+        matches = []
         for record in records:
+            variation_set = record.get("variation_set", [{}])
+            loc_list = variation_set[0].get("variation_loc", []) if variation_set else []
+            current_loc = next((l for l in loc_list if l.get("status") == "current"), {})
+
+            clinvar_start = int(current_loc["start"]) if current_loc.get("start") else None
+            clinvar_end = int(current_loc["stop"]) if current_loc.get("stop") else None
+
+            position_verified = None
+            if expected_start is not None and clinvar_start is not None:
+                position_verified = (expected_start == clinvar_start)
+
             matches.append({
                 "variation_id": record.attributes.get("uid"),
                 "title": record.get("title"),
@@ -83,12 +139,27 @@ class VariantClient:
                 "clinical_impact_traits": self.extract_trait_names(record.get("clinical_impact_classification", {})),
                 "oncogenicity_classification": record.get("oncogenicity_classification", {}).get("description"),
                 "oncogenicity_traits": self.extract_trait_names(record.get("oncogenicity_classification", {})),
+                "position_verified": position_verified,
+                "clinvar_position": clinvar_start,
             })
 
-        return {"found": True, "matches":matches}
+        return {"found": True, "matches": matches}
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     client = VariantClient()
-    vep_result = client.get_vep_consequence("chr7:g.140753336A>T")
-    clinvar_result = client.get_clinvar_summary(vep_result["gene_symbol"], vep_result["protein_change_short"])
-    print(clinvar_result)
+
+    # Known-good case: BRAF V600E
+    vep = client.get_vep_consequence("chr7:g.140753336A>T")
+    clinvar = client.get_clinvar_summary(
+        vep["gene_symbol"], vep["protein_change_short"],
+        expected_start=vep["genomic_start"], expected_end=vep["genomic_end"]
+    )
+    print("BRAF position_verified:", clinvar["matches"][0]["position_verified"])
+
+    # Known-bad case: your off-by-one duplication
+    vep2 = client.get_vep_consequence("chr1:g.935845_935847dup")
+    clinvar2 = client.get_clinvar_summary(
+        vep2["gene_symbol"], vep2["protein_change_short"],
+        expected_start=vep2["genomic_start"], expected_end=vep2["genomic_end"]
+    )
+    print("Duplication position_verified:", clinvar2["matches"][0]["position_verified"] if clinvar2["found"] else "not found")
