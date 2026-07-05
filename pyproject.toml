@@ -1,6 +1,7 @@
 [project]
 name = "vepclin-mcp"
 version = "0.1.0"
+requires-python = ">=3.10"
 dependencies = [
     "httpx",
     "biopython",
@@ -11,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 vepclin = "llm_runner:main"
+vepclin-server = "mcp_server:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

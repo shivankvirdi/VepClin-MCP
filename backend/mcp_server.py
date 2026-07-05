@@ -56,6 +56,10 @@ def get_clinvar_summary(gene_symbol: str, protein_change_short: str) -> dict:
     print_server_event("get_clinvar_summary output", result)
     return result
 
-if __name__ == "__main__":
+def main() -> None:
     print_server_event("VepClin MCP server", {"transport": "http", "host": "0.0.0.0", "port": 8080})
     mcp.run(transport="http", host="0.0.0.0", port=8080)
+
+
+if __name__ == "__main__":
+    main()

@@ -17,22 +17,43 @@ The CLI uses a Gruvbox-styled Rich interface with persistent conversation histor
 
 ## Quick Install
 
+### Windows PowerShell
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
+### macOS / Linux
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
+```
+
 ### Create a `.env` file in the folder where you will run VepClin
 
+Windows PowerShell:
+
 ```powershell
-OPENROUTER_API_KEY=sk-or...
-# Fill with your API key (see .env.example)
+Set-Content -Path .env -Value "OPENROUTER_API_KEY=sk-or..."
 ```
+
+macOS / Linux:
+
+```bash
+printf "OPENROUTER_API_KEY=sk-or...\n" > .env
+```
+
+Fill with your OpenRouter API key. VepClin also checks `OPENROUTER_API_KEY` if it is already set as an environment variable.
 
 ## Install from Source
 
-Follow `.env.example` & add API key to `VepClin-MCP/.env` (repo root)
+Follow `.env.example` and add your API key to `VepClin-MCP/.env` in the repo root.
+
+### Windows PowerShell
 
 ```powershell
 git clone https://github.com/shivankvirdi/VepClin-MCP.git
@@ -40,18 +61,35 @@ cd VepClin-MCP
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -e .
+Copy-Item .env.example .env
+```
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/shivankvirdi/VepClin-MCP.git
+cd VepClin-MCP
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+cp .env.example .env
 ```
 
 ## Running VepClin-MCP
 
 Run the terminal chat CLI:
 
-```powershell
+```bash
 vepclin
 ```
+## Optional: Running only MCP server
 
-Run the MCP server directly:
+```bash
+vepclin-server
+```
 
-```powershell
-python backend\mcp_server.py
+If you installed from source, you can also run the server directly:
+
+```bash
+python backend/mcp_server.py
 ```
