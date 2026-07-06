@@ -1,14 +1,20 @@
 from fastmcp import FastMCP
 from variant_client import VariantClient
 from terminal_ui import print_server_event
+from session_config import session_config
 
 mcp = FastMCP("vepclin-mcp")
 client = VariantClient()
 
 @mcp.tool()
 def get_vep_consequence(variant: str) -> dict:
-    """Look up the biological effect of a genetic variant given in HGVS genomic notation,
-    (e.g. "chr7:g.140753336A>T"). Use this when a user asks what a specific DNA variant does.
+    """Look up the biological effect of a genetic variant given in supported HGVS notation.
+    Use genomic HGVS (e.g. "chr7:g.140753336A>T") or coding HGVS with a transcript
+    accession (e.g. "NM_004333.6:c.1799T>A"). Bare coding HGVS like "c.1799T>A"
+    is ambiguous and unsupported. Use this when a user asks what a specific DNA variant does.
+
+    Genome build and transcript scope (MANE Select only vs. all transcripts) are set by
+    the user via CLI commands, not by this tool's arguments.
 
     Returns a dict with:
     - gene_symbol: the affected gene (e.g. "BRAF")
@@ -17,9 +23,28 @@ def get_vep_consequence(variant: str) -> dict:
     ("None" if not applicable, like for synonymous variants)
     - protein_change_short: the same change in short form, (e.g. "V600E" — use this exact
     value when calling get_clinvar_summary)
+    - impact: Ensembl's severity bucket for the consequence type (HIGH/MODERATE/LOW/MODIFIER)
+    - sift_prediction / sift_score: SIFT's tolerance prediction and probability (lower score
+    = more likely damaging; "None" if not applicable to this consequence type)
+    - polyphen_prediction / polyphen_score: PolyPhen-2's damage prediction and probability
+    (higher score = more likely damaging; "None" if not applicable)
+    - build: genome build used for this lookup ("grch38" or "grch37")
+    - input_hgvs: the original HGVS input string
+    - hgvs_format: "genomic" for g. inputs or "coding" for transcript-qualified c. inputs
+    - transcripts: only present if the user has selected "all transcripts" mode and the
+    variant has more than one transcript consequence. A list of dicts, each with
+    transcript_id, consequence, protein_change, impact, sift_prediction, and
+    polyphen_prediction for that transcript. The top-level fields above always reflect
+    the primary (MANE Select or first-returned) transcript, which is also what gets
+    passed to get_clinvar_summary — do not use a value from the transcripts list for
+    that purpose.
     """
     print_server_event("get_vep_consequence input", {"variant": variant})
-    result = client.get_vep_consequence(variant)
+    result = client.get_vep_consequence(
+        variant,
+        build=session_config.build,
+        transcript_mode=session_config.transcript_mode,
+    )
     print_server_event("get_vep_consequence output", result)
     return result
 

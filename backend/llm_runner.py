@@ -12,7 +12,12 @@ from dotenv import load_dotenv
 from fastmcp.client import Client
 from rich.prompt import Prompt
 
+import questionary
+from mcp_server import client as variant_client_instance
 from mcp_server import mcp
+from session_config import session_config
+from terminal_ui import print_batch_results
+
 from terminal_ui import (
     console,
     print_answer,
@@ -21,6 +26,7 @@ from terminal_ui import (
     print_error,
     print_help,
     print_retry,
+    print_setting_change,
     print_tool_call,
     print_tool_result,
 )
@@ -28,14 +34,30 @@ from terminal_ui import (
 
 MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
+BUILD_LABELS = {
+    "grch38": "GRCh38 (current, default)",
+    "grch37": "GRCh37 (legacy)",
+}
+
+TRANSCRIPT_MODE_LABELS = {
+    "mane_select": "MANE Select only",
+    "all": "All transcripts",
+}
+
+
+def clean_user_path(path: str) -> str:
+    return path.strip().strip("\"'")
+
 SYSTEM_MESSAGE = {
     "role": "system",
     "content": (
-        "When looking up genetic variants, prefer genomic HGVS notation (chr{N}:g....) "
-        "for get_vep_consequence. If the user provides a well-known gene + protein change "
+        "When looking up genetic variants, use get_vep_consequence for supported HGVS inputs: "
+        "genomic HGVS such as chr{N}:g...., or coding HGVS only when it includes a transcript "
+        "accession such as NM_004333.6:c.1799T>A. Bare c. notation is ambiguous; ask for the "
+        "transcript accession instead of guessing. If the user provides a well-known gene + protein change "
         "(e.g. 'BRAF V600E'), you may call get_clinvar_summary directly without needing "
         "get_vep_consequence first. For duplications, insertions, or frameshifts, only "
-        "construct a genomic coordinate if you are highly confident in the exact position. "
+        "construct a genomic or transcript-qualified coding HGVS string if you are highly confident in the exact position. "
         "Prefer asking the user for the exact HGVS notation, such as from a lab report or "
         "ClinVar page, rather than guessing, since an incorrect coordinate can silently "
         "return data for the wrong variant. Do not use emojis, pictograms, or decorative "
@@ -147,7 +169,7 @@ async def run_chat() -> None:
         )
         return
 
-    print_banner()
+    print_banner(MODEL, BUILD_LABELS[session_config.build], TRANSCRIPT_MODE_LABELS[session_config.transcript_mode])
 
     os.environ["VEPCLIN_EMBEDDED_CHAT"] = "1"
     async with Client(transport=mcp) as client:
@@ -173,6 +195,85 @@ async def run_chat() -> None:
             if command == "/clear":
                 messages = [SYSTEM_MESSAGE.copy()]
                 print_clear_notice()
+                continue
+            if command == "/build":
+                choice = await questionary.select(
+                    "Select genome build:",
+                    choices=[
+                        questionary.Choice(BUILD_LABELS["grch38"], value="grch38"),
+                        questionary.Choice(BUILD_LABELS["grch37"], value="grch37"),
+                    ],
+                    default=session_config.build,
+                    show_selected=True,
+                ).ask_async()
+                if choice is not None:
+                    session_config.build = choice
+                    session_config.save()
+                    print_setting_change(
+                        "Genome Build Updated",
+                        [
+                            ("Build", BUILD_LABELS[choice]),
+                            ("Applies to", "Future Ensembl VEP lookups in this chat"),
+                            ("Saved to", session_config.config_path),
+                        ],
+                    )
+                continue
+            if command == "/batch":
+                path = await questionary.path("Path to VCF file:").ask_async()
+                if not path:
+                    continue
+                path = clean_user_path(path)
+
+                try:
+                    variants = variant_client_instance.parse_vcf(path)
+                except FileNotFoundError:
+                    print_error("File not found", f"No file at '{path}'.")
+                    continue
+
+                if not variants:
+                    print_error("Empty batch", "No usable variant rows were found in that file.")
+                    continue
+
+                if len(variants) > session_config.MAX_BATCH_SIZE:
+                    print_error(
+                        "Batch too large",
+                        f"{len(variants)} variants found; Ensembl's limit is "
+                        f"{session_config.MAX_BATCH_SIZE} per request. Split the file and retry.",
+                    )
+                    continue
+
+                with console.status(f"[mcp]Running {len(variants)} variants through VEP..."):
+                    vep_results = variant_client_instance.get_vep_consequences_batch(
+                        variants, build=session_config.build, transcript_mode=session_config.transcript_mode
+                    )
+
+                with console.status("[mcp]Checking ClinVar for each variant..."):
+                    full_results = variant_client_instance.get_clinvar_summaries_batch(vep_results)
+
+                print_batch_results(full_results)
+                continue
+
+            if command == "/transcripts":
+                choice = await questionary.select(
+                    "Select transcript scope:",
+                    choices=[
+                        questionary.Choice("MANE Select only (recommended)", value="mane_select"),
+                        questionary.Choice(TRANSCRIPT_MODE_LABELS["all"], value="all"),
+                    ],
+                    default=session_config.transcript_mode,
+                    show_selected=True,
+                ).ask_async()
+                if choice is not None:
+                    session_config.transcript_mode = choice
+                    session_config.save()
+                    print_setting_change(
+                        "Transcript Scope Updated",
+                        [
+                            ("Scope", TRANSCRIPT_MODE_LABELS[choice]),
+                            ("Applies to", "Future Ensembl VEP lookups in this chat"),
+                            ("Saved to", session_config.config_path),
+                        ],
+                    )
                 continue
 
             messages.append({"role": "user", "content": user_query})

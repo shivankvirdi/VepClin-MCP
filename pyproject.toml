@@ -8,6 +8,7 @@ dependencies = [
     "rich",
     "fastmcp",
     "python-dotenv",
+    "questionary",
 ]
 
 [project.scripts]
@@ -22,7 +23,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["llm_runner", "mcp_server", "terminal_ui", "variant_client"]
+py-modules = ["llm_runner", "mcp_server", "session_config", "terminal_ui", "variant_client"]
 
 [tool.setuptools.package-dir]
 "" = "backend"
