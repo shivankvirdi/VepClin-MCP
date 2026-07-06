@@ -51,8 +51,6 @@ Fill with your OpenRouter API key. VepClin also checks `OPENROUTER_API_KEY` if i
 
 ## Install from Source
 
-Follow `.env.example` and add your API key to `VepClin-MCP/.env` in the repo root.
-
 ### Windows PowerShell
 
 ```powershell
@@ -74,6 +72,8 @@ source .venv/bin/activate
 python -m pip install -e .
 cp .env.example .env
 ```
+
+Follow `.env.example` and add your API key to `VepClin-MCP/.env` in the repo root.
 
 ## Running VepClin-MCP
 
