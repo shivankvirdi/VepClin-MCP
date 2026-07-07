@@ -57,9 +57,12 @@ source .venv/bin/activate
 python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
-### Set `OPENROUTER_API_KEY` as an environment variable
-Fill with your api key from https://openrouter.ai/  
-`NCBI_API_KEY` is optional for higher request rates (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)
+### Set API keys & email as environment variables
+`OPENROUTER_API_KEY` is required for the LLM chat interface (https://openrouter.ai/)
+`NCBI_EMAIL` is recommended for consistent NCBI Entrez/ClinVar requests.
+`NCBI_API_KEY` is optional, but recommended for higher ClinVar request limits (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)
+\
+Example declarations with `OPENROUTER_API_KEY`
 #### Windows PowerShell:
 
 ```powershell
@@ -103,7 +106,7 @@ python -m pip install -e .
 cp .env.example .env
 ```
 
-Follow `.env.example` and add your API keys to `VepClin-MCP/.env` in the repo root.
+Follow `.env.example` and add your API keys & email to `VepClin-MCP/.env` in the repo root.
 
 ## Running VepClin-MCP
 

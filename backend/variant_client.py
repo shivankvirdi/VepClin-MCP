@@ -12,7 +12,7 @@ from terminal_ui import print_retry
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
-Entrez.email = "shivank.virdi@gmail.com"
+Entrez.email = os.environ.get("NCBI_EMAIL") or "your-email@example.com"
 Entrez.api_key = os.environ.get("NCBI_API_KEY") or None
 
 
