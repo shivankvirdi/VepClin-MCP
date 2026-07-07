@@ -35,7 +35,7 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 - Variant Annotation: Ensembl VEP REST API
 - Clinical Data: `NCBI ClinVar` via `Biopython Entrez`
 - Excel/PDF Export: `openpyxl`, `ReportLab`
-- Storage: Local `config.json` file for session preferences
+- Storage: Local `config.json` file for genome build & transcript-mode preferences
 - Packaging: `setuptools`, `pyproject.toml`
 - Testing: `pytest`, `FastMCP` test client
 
@@ -58,30 +58,33 @@ python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
 ### Set API keys & email as environment variables
-`OPENROUTER_API_KEY` is required for the LLM chat interface (https://openrouter.ai/)
-`NCBI_EMAIL` is recommended for consistent NCBI Entrez/ClinVar requests.
-`NCBI_API_KEY` is optional, but recommended for higher ClinVar request limits (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)
-\
-Example declarations with `OPENROUTER_API_KEY`
+`OPENROUTER_API_KEY` is required for the LLM chat interface (https://openrouter.ai/)  
+`NCBI_EMAIL` is recommended for consistent NCBI Entrez/ClinVar requests  
+`NCBI_API_KEY` is optional, but recommended for higher ClinVar request limits (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)  
 #### Windows PowerShell:
 
 ```powershell
 [Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or...", "User")
+[Environment]::SetEnvironmentVariable("NCBI_EMAIL", "you@example.com", "User")
+[Environment]::SetEnvironmentVariable("NCBI_API_KEY", "...", "User")
 ```
 
 #### macOS / Linux:
 
-```bash
-# Bash
-echo 'export OPENROUTER_API_KEY="sk-or..."' >> ~/.zshrc
-source ~/.zshrc
-```
 ```zsh
 # Zsh
+echo 'export OPENROUTER_API_KEY="sk-or..."' >> ~/.zshrc
+echo 'export NCBI_EMAIL="you@example.com"' >> ~/.zshrc
+echo 'export NCBI_API_KEY="..."' >> ~/.zshrc
+source ~/.zshrc
+```
+```bash
+# Bash
 echo 'export OPENROUTER_API_KEY="sk-or..."' >> ~/.bashrc
+echo 'export NCBI_EMAIL="you@example.com"' >> ~/.bashrc
+echo 'export NCBI_API_KEY="..."' >> ~/.bashrc
 source ~/.bashrc
 ```
-
 ## Install from Source
 
 #### Windows PowerShell
@@ -112,12 +115,12 @@ Follow `.env.example` and add your API keys & email to `VepClin-MCP/.env` in the
 
 Run the terminal chat CLI:
 
-```powershell
+```bash
 vepclin
 ```
 ## Running only MCP server
 Most users don't need this. The `vepclin` chat CLI starts and uses the MCP tools automatically.
-```powershell
+```bash
 vepclin-server
 ```
 
