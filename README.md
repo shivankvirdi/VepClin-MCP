@@ -10,8 +10,7 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 </div>
 
 </br>
-
-<img width="1217" height="720" alt="VepClin-MCP GIF" src="https://github.com/user-attachments/assets/d8ecaafd-b4d8-43cc-96ea-d32487fade65" />
+<img width="1217" height="720" alt="vepclin-mcpdemogif" src="https://github.com/user-attachments/assets/26057d12-e124-44c0-9d05-1a1a55ed9c8b" />
 </br>
 </br>
 
