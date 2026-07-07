@@ -58,9 +58,9 @@ python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
 ### Set API keys & email as environment variables
-`OPENROUTER_API_KEY` is required for the LLM chat interface (https://openrouter.ai/)  
-`NCBI_EMAIL` is recommended for consistent NCBI Entrez/ClinVar requests  
-`NCBI_API_KEY` is optional, but recommended for higher ClinVar request limits (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)  
+`OPENROUTER_API_KEY` is required for the LLM chat interface (https://openrouter.ai/).    
+`NCBI_EMAIL` is recommended for consistent NCBI Entrez/ClinVar requests.  
+`NCBI_API_KEY` is optional, but recommended for higher ClinVar request limits (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/).  
 #### Windows PowerShell:
 
 ```powershell
