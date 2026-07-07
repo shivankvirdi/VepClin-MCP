@@ -1,5 +1,8 @@
 <div align="center">
-
+<img width="25%" height="20%" alt="Untitled design" src="./assets/vepclin-mascot.png" />  
+<br/><sub><code>Exon the Axolotl</code></sub>
+<br/>
+  
 # VepClin-MCP
 
 VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ensembl VEP, NCBI ClinVar, an MCP server layer, and OpenRouter's NVIDIA Nemotron 3 Ultra model to look up variant consequences and clinical significance, presenting the results as clear, readable summaries in a Rich-powered CLI.
@@ -12,12 +15,34 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 </br>
 </br>
 
-The CLI uses a Gruvbox-styled Rich interface with persistent conversation history. Ask follow-up questions in the same session, use `/clear` to reset context, `/help` for input tips, and `/exit` to quit.
-</br>
+
+## Features
+- NVIDIA Nemotron 3 Ultra powered chat interface
+- Ensembl VEP integration for genomic and transcript-qualified HGVS variant consequence lookup
+- ClinVar integration for clinical significance, oncogenicity, review status, traits, & variation IDs
+- `/batch`: Upload VCF files & summarize multiple variants
+- `/export`: Save latest batch results as CSV, TSV, VCF, or Excel .xlsx
+- `/report`: Save single-variant lookup as a PDF report
+- `/build`: Switch between GRCh38 and GRCh37 lookups
+- `/transcripts`: Choose MANE Select-only results or all transcript consequences
+- Gruvbox-styled Rich terminal interface with readable panels, tables, & status messages
+- MCP server layer exposing custom reusable variant annotation tools
+
+## Technologies Used
+- CLI/UI: `Python`, `Rich`, `Questionary`
+- MCP Layer: `FastMCP`
+- HTTP/API Client: `httpx`
+- AI: OpenRouter API, NVIDIA Nemotron 3 Ultra
+- Variant Annotation: Ensembl VEP REST API
+- Clinical Data: `NCBI ClinVar` via `Biopython Entrez`
+- Excel/PDF Export: `openpyxl`, `ReportLab`
+- Storage: Local `config.json` file for session preferences
+- Packaging: `setuptools`, `pyproject.toml`
+- Testing: `pytest`, `FastMCP` test client
 
 ## Quick Install
 
-### Windows PowerShell
+#### Windows PowerShell
 
 ```powershell
 python -m venv .venv
@@ -25,7 +50,7 @@ python -m venv .venv
 python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
-### macOS / Linux
+#### macOS / Linux
 
 ```bash
 python3 -m venv .venv
@@ -33,25 +58,30 @@ source .venv/bin/activate
 python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 ```
 
-### Create a `.env` file in the folder where you will run VepClin
-
-Windows PowerShell:
+### Set `OPENROUTER_API_KEY` as an environment variable
+Fill with your api key from https://openrouter.ai/  
+#### Windows PowerShell:
 
 ```powershell
-Set-Content -Path .env -Value "OPENROUTER_API_KEY=sk-or..."
+[Environment]::SetEnvironmentVariable("OPENROUTER_API_KEY", "sk-or...", "User")
 ```
 
-macOS / Linux:
+#### macOS / Linux:
 
 ```bash
-printf "OPENROUTER_API_KEY=sk-or...\n" > .env
+# Bash
+echo 'export OPENROUTER_API_KEY="sk-or..."' >> ~/.zshrc
+source ~/.zshrc
 ```
-
-Fill with your OpenRouter API key. VepClin also checks `OPENROUTER_API_KEY` if it is already set as an environment variable.
+```zsh
+# Zsh
+echo 'export OPENROUTER_API_KEY="sk-or..."' >> ~/.bashrc
+source ~/.bashrc
+```
 
 ## Install from Source
 
-### Windows PowerShell
+#### Windows PowerShell
 
 ```powershell
 git clone https://github.com/shivankvirdi/VepClin-MCP.git
@@ -62,7 +92,7 @@ python -m pip install -e .
 Copy-Item .env.example .env
 ```
 
-### macOS / Linux
+#### macOS / Linux
 
 ```bash
 git clone https://github.com/shivankvirdi/VepClin-MCP.git
@@ -79,12 +109,12 @@ Follow `.env.example` and add your API key to `VepClin-MCP/.env` in the repo roo
 
 Run the terminal chat CLI:
 
-```bash
+```powershell
 vepclin
 ```
 ## Running only MCP server
 Most users don't need this. The `vepclin` chat CLI starts and uses the MCP tools automatically.
-```bash
+```powershell
 vepclin-server
 ```
 
