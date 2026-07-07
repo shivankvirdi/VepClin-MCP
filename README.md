@@ -59,6 +59,7 @@ python -m pip install git+https://github.com/shivankvirdi/VepClin-MCP.git
 
 ### Set `OPENROUTER_API_KEY` as an environment variable
 Fill with your api key from https://openrouter.ai/  
+`NCBI_API_KEY` is optional for higher request rates (https://www.ncbi.nlm.nih.gov/datasets/docs/v2/api/api-keys/)
 #### Windows PowerShell:
 
 ```powershell
@@ -102,7 +103,7 @@ python -m pip install -e .
 cp .env.example .env
 ```
 
-Follow `.env.example` and add your API key to `VepClin-MCP/.env` in the repo root.
+Follow `.env.example` and add your API keys to `VepClin-MCP/.env` in the repo root.
 
 ## Running VepClin-MCP
 
