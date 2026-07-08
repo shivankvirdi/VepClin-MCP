@@ -23,6 +23,7 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 - Single-variant PDF report generation
 - Gruvbox-styled Rich terminal interface with readable panels, tables, & status messages
 - MCP server layer exposing custom reusable variant annotation tools
+- Exon the Axolotl!!!
 
 ## Commands
 | Command | Description |
