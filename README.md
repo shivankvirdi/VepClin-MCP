@@ -19,13 +19,22 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 - NVIDIA Nemotron 3 Ultra powered chat interface
 - Ensembl VEP integration for genomic and transcript-qualified HGVS variant consequence lookup
 - ClinVar integration for clinical significance, oncogenicity, review status, traits, & variation IDs
-- `/batch`: Upload VCF files & summarize multiple variants (up to 200 at a time)
-- `/export`: Save latest batch results as CSV, TSV, VCF, or Excel .xlsx
-- `/report`: Save single-variant lookup as a PDF report
-- `/build`: Switch between GRCh38 and GRCh37 lookups
-- `/transcripts`: Choose MANE Select-only results or all transcript consequences
+- Export batch results as CSV, TSV, annotated VCF, or multi-sheet Excel (.xlsx)
+- Single-variant PDF report generation
 - Gruvbox-styled Rich terminal interface with readable panels, tables, & status messages
 - MCP server layer exposing custom reusable variant annotation tools
+
+## Commands
+| Command | Description |
+|---|---|
+| `/batch` | Upload VCF files & summarize multiple variants (up to 200 at a time) |
+| `/export` | Save latest batch results as CSV, TSV, VCF, or Excel `.xlsx` |
+| `/report` | Save single-variant lookups as a PDF report |
+| `/build` | Switch between GRCh38 and GRCh37 lookups |
+| `/transcripts` | Choose MANE Select-only results or all transcript consequences |
+| `/clear` | Reset the conversation context |
+| `/help` | Show usage tips and this command list |
+| `/exit` or `/quit` | Quit VepClin |
 
 ## Technologies Used
 - CLI/UI: `Python`, `Rich`, `Questionary`
