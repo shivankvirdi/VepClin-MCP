@@ -48,6 +48,40 @@ VepClin-MCP is a terminal-based bioinformatics CLI chat tool that integrates Ens
 - Packaging: `setuptools`, `pyproject.toml`
 - Testing: `pytest`, `FastMCP` test client
 
+## Architecture Diagram
+```mermaid
+---
+---
+config:
+  layout: dagre
+  theme: redux-dark-color
+  look: redux
+  fontFamily: '''Source Code Pro Variable'', monospace'
+  themeVariables:
+    fontFamily: '''Source Code Pro Variable'', monospace'
+---
+flowchart LR
+    User[User] --> CLI[VepClin CLI<br/>terminal_ui.py<br/>Rich + Questionary]
+
+    CLI --> Runner[Chat + Command Loop<br/>llm_runner.py<br/>Handles chat, slash commands, tool calls]
+    Runner --> MCP[Embedded FastMCP Server<br/>mcp_server.py<br/>Exposes variant tools]
+    MCP --> Client[VariantClient<br/>variant_client.py<br/>Runs VEP + ClinVar lookups]
+
+    Client --> VEP[Ensembl VEP REST API<br/>Variant consequences]
+    Client --> ClinVar[NCBI ClinVar / Entrez<br/>Clinical significance]
+
+    VEP --> Results[Annotated Variant Results<br/>VEP consequence data]
+    ClinVar --> Results[Annotated Variant Results<br/>ClinVar clinical data]
+
+    Results --> Runner
+    Runner --> CLI
+
+    Runner --> Settings[Session Settings<br/>session_config.py<br/>Genome build + transcript mode]
+    Runner --> Exports[Export Helpers<br/>exporter.py<br/>CSV / TSV / VCF / XLSX / PDF]
+
+    Exports --> Files[Local Output Files<br/>Reports + batch exports]
+```
+
 ## Quick Install
 
 #### Windows PowerShell
